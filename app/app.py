@@ -33,6 +33,11 @@ def connect(args):
     try:
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket.connect((args.ip, args.port))
+
+        # Send username and password for authentication
+        tcp_socket.sendall(f"{args.username}\r\n".encode())
+        tcp_socket.sendall(f"{args.password}\r\n".encode())
+        
     except Exception as e:
         logging.error(f"Connection failed: {e}. Check device or network.")
         raise
@@ -126,6 +131,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Data Interface for Any Device")
     parser.add_argument('--ip', type=str, required=True, help='Device IP address')
     parser.add_argument('--port', type=int, default=7200, help='TCP connection port (default: 5000)')
+    parser.add_argument('--username', type=str, default="data", help='Username for TCP connection')
+    parser.add_argument('--password', type=str, default="METEKGMBH", help='Password for TCP connection')
     parser.add_argument('--sensor', type=str, required=True, help='Sensor names')
     parser.add_argument('--timeout', type=int, default=300, help='Timeout interval in seconds (default: 300)')
 
