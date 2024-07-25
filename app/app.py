@@ -21,8 +21,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 TIMEOUT_SECONDS = 300
 
 
-
-
 def connect(args):
     """
     Connect to a device.
@@ -34,79 +32,89 @@ def connect(args):
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket.connect((args.ip, args.port))
 
-        # Send username and password for authentication
+        response = tcp_socket.recv(4096).decode("utf-8")
+        logging.info(response)
         tcp_socket.sendall(f"{args.username}\r\n".encode())
+
+        response = tcp_socket.recv(4096).decode("utf-8")
+        logging.info(response)
         tcp_socket.sendall(f"{args.password}\r\n".encode())
 
-        # Handle the failed authentication 
         response = tcp_socket.recv(4096).decode("utf-8")
-        if "Authentication successful" not in response:
+        logging.info(response)
+
+        # Handle the failed authentication
+        if "authentication successful" not in response:
             raise Exception("Authentication failed.")
-        
+        logging.info("authentication successful")
+
     except Exception as e:
         logging.error(f"Connection failed: {e}. Check device or network.")
         raise
     return tcp_socket
 
 
-def publish_data(plugin, data, data_names, meta):
-    """
-    Publishes data to the beehive.
 
-    :param plugin: Plugin object for publishing.
-    :param data: Data dictionary to be published.
-    :param data_names: Mapping of data keys to publishing names.
-    :param meta: Metadata for the data.
-    """
-    if data:
-        timestamp_nanoseconds = int(data.get('Seconds', 0) * 1e9) # 0 if not found
 
-        for key, value in data.items():
-            if key in data_names:
-                try:
-                    meta_data = {
-                        "units": meta["units"][data_names[key]],
-                        "description": meta["description"][data_names[key]],
-                        "name": data_names[key],
-                        "sensor": meta["sensor"],
-                    }
-                    plugin.publish(data_names[key], value, meta=meta_data, 
-                                timestamp=timestamp_nanoseconds)
-                except KeyError as e:
-                    logging.error(f"Metadata key missing: {e}")
+def publish_data(plugin, data, data_names, meta, additional_meta=None):
+    """
+    Publishes data to the plugin.
+
+    :param plugin: Plugin object for publishing data.
+    :param data: Dictionary of data to be published.
+    :param data_names: Mapping of data keys to their publishing names.
+    :param meta: Metadata associated with the data.
+    :param additional_meta: Additional metadata to be included.
+    """
+
+    if not data:
+        logging.warning("No data to publish.")
+        plugin.publish("status", "NoData", meta={"timestamp": get_timestamp()})
+        return
+
+    for key, value in data.items():
+        if key in data_names:
+            try:
+                meta_data = {
+                    "missing": "-9999.0",
+                    "units": meta["units"][data_names[key]],
+                    "description": meta["description"][data_names[key]],
+                    "name": data_names[key],
+                    "sensor": meta["sensor"],
+                }
+                if additional_meta:
+                    meta_data.update(additional_meta)
+
+                timestamp = get_timestamp()
+                plugin.publish(
+                    data_names[key], value, meta=meta_data, timestamp=timestamp
+                )
+            except KeyError as e:
+                plugin.publish('status', f'{e}')
+                print(f"Error: Missing key in meta data - {e}")
+
+
 
 
 
 @timeout_decorator.timeout(TIMEOUT_SECONDS, use_signals=True)
-def parse_data(args, tcp_socket):
+def parse_data(args, tcp_socket, data_names):
     try:
-        data = tcp_socket.recv(4096).decode("utf-8").rstrip().split(";")[1:5]
+        line = tcp_socket.recv(4096).decode("utf-8").rstrip().split(";")[1:5]
     except Exception as e:
         logging.error(f"Error getting data: {e}")
         raise
 
-    return extract_data(data)
 
+    if not line or len(line) < len(data_names):
+        logging.warning("Empty or incomplete data line received.")
+        raise ValueError("Empty or incomplete data line.")
 
-def extract_data(data):
-    parsed_data = {}
-    # Ratterns and keys for specific device
-    patterns = {
-        'U': r'\(U ([-\d.]+)\)',
-        'V': r'\(V ([-\d.]+)\)',
-        'W': r'\(W ([-\d.]+)\)',
-        'TS': r'\(TS ([-\d.]+)\)',
-    }
+    keys = data_names.keys()
+    values = [float(value) for value in line]
+    data_dict = dict(zip(keys, values))
+    return data_dict
 
-    for key, pattern in patterns.items():
-        match = re.search(pattern, data)
-        if match:
-            try:
-                parsed_data[key] = float(match.group(1))
-            except ValueError:
-                parsed_data[key] = match.group(1)
-    
-    return parsed_data
 
 
 
@@ -116,7 +124,7 @@ def run(args, data_names, meta):
         try:
             tcp_socket = connect(args)
             while True:
-                data = parse_data(args, tcp_socket)
+                data = parse_data(args, tcp_socket, data_names)
                 # logging.info(f"Data: {data}")
                 publish_data(plugin, data, data_names, meta)
         except timeout_decorator.TimeoutError:
