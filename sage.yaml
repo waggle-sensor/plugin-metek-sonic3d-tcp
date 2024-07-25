@@ -1,0 +1,15 @@
+name: "mitek-usonics3d-tcp"
+description: "Captures & uploads data from a MITEK sonic on TCP data stream."
+version: "0.24.7.25"
+authors: "Bhupendra Raut, Sujan Pal"
+collaborators: "Matt Tuftedal, Joe O'Brien, Ryan Sullivan, Yongho Kim and Raj Sankaran"
+funding: "Community Research on Climate and Urban Science (CROCUS)"
+license: ""
+keywords: "Eddy covariance, Flux Measurement "
+homepage: ""
+source:
+  architectures:
+    - "linux/amd64"
+    - "linux/arm64"
+  url: ""
+  branch: "main"
