@@ -70,7 +70,7 @@ def publish_data(plugin, data, data_names, meta):
 @timeout_decorator.timeout(TIMEOUT_SECONDS, use_signals=True)
 def parse_data(args, tcp_socket):
     try:
-        data = tcp_socket.recv(4096).decode("utf-8")
+        data = tcp_socket.recv(4096).decode("utf-8").rstrip().split(";")[1:5]
     except Exception as e:
         logging.error(f"Error getting data: {e}")
         raise
@@ -142,7 +142,7 @@ data_names = OrderedDict([
     ("T", "sensor.temperature"),
     ("vel", "sensor.velocity"),
     ("dir", "sensor.direction"),
-    #("vels", "sensor.velocity_std"),
+    ("vels", "sensor.velocity_std"),
     #("dirs", "sensor.direction_std"),
 ])
 
