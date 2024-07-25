@@ -37,6 +37,11 @@ def connect(args):
         # Send username and password for authentication
         tcp_socket.sendall(f"{args.username}\r\n".encode())
         tcp_socket.sendall(f"{args.password}\r\n".encode())
+
+        # Handle the failed authentication 
+        response = tcp_socket.recv(4096).decode("utf-8")
+        if "Authentication successful" not in response:
+            raise Exception("Authentication failed.")
         
     except Exception as e:
         logging.error(f"Connection failed: {e}. Check device or network.")
