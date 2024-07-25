@@ -46,7 +46,6 @@ def connect(args):
         # Handle the failed authentication
         if "authentication successful" not in response:
             raise Exception("Authentication failed.")
-        logging.info("authentication successful")
 
     except Exception as e:
         logging.error(f"Connection failed: {e}. Check device or network.")
