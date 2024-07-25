@@ -102,6 +102,7 @@ def extract_data(data):
 
 def run(args, data_names, meta):
     with Plugin() as plugin:
+        tcp_socket = None
         try:
             tcp_socket = connect(args)
             while True:
@@ -133,30 +134,41 @@ if __name__ == "__main__":
     # get timeout in seconds
     os.environ['TIMEOUT_SECONDS'] = str(args.timeout)
 
-    # data_names and meta
-    data_names = OrderedDict([
-        ("U", "sonic.u"),
-        ("V", "sonic.v"),
-        ("W", "sonic.w"),
-        ("TS", "sonic.temperature"),
-    ])
+# data_names and meta
+data_names = OrderedDict([
+    ("x", "sensor.x"),
+    ("y", "sensor.y"),
+    ("z", "sensor.z"),
+    ("T", "sensor.temperature"),
+    ("vel", "sensor.velocity"),
+    ("dir", "sensor.direction"),
+    #("vels", "sensor.velocity_std"),
+    #("dirs", "sensor.direction_std"),
+])
 
-    meta = {
-        "sensor": args.sensor,
-        "units": {
-            "sonic.u": "m/s",
-            "sonic.v": "m/s",
-            "sonic.w": "m/s",
-            "sonic.temperature": "°C",
-        },
-        "description": {
-            "sonic.u": "Sonic U-component of wind speed",
-            "sonic.v": "Sonic V-component of wind speed",
-            "sonic.w": "Sonic vertical wind speed",
-            "sonic.temperature": "Sonic temperature",
-        },
-    }
-
+meta = {
+    "sensor": args.sensor,
+    "units": {
+        "sensor.x": "units",
+        "sensor.y": "units",
+        "sensor.z": "units",
+        "sensor.temperature": "°C",
+        "sensor.velocity": "m/s",
+        "sensor.direction": "degrees",
+        #"sensor.velocity_std": "m/s",
+        #"sensor.direction_std": "degrees",
+    },
+    "description": {
+        "sensor.x": "X-component",
+        "sensor.y": "Y-component",
+        "sensor.z": "Z-component",
+        "sensor.temperature": "Temperature",
+        "sensor.velocity": "Velocity",
+        "sensor.direction": "Direction",
+        #"sensor.velocity_std": "Standard deviation of velocity",
+        #"sensor.direction_std": "Standard deviation of direction",
+    },
+}
     try:
         run(args, data_names, meta)
     except KeyboardInterrupt:
