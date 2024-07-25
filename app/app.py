@@ -169,12 +169,13 @@ meta = {
         #"sensor.direction_std": "Standard deviation of direction",
     },
 }
-    try:
-        run(args, data_names, meta)
-    except KeyboardInterrupt:
-        logging.info("Interrupted by user, shutting down.")
-    except Exception as e:
-        logging.error(f"Startup failed: {e}")
-    finally:
-        logging.info("Application terminated.")
+
+try:
+    run(args, data_names, meta)
+except KeyboardInterrupt:
+    logging.info("Interrupted by user, shutting down.")
+except Exception as e:
+    logging.error(f"Startup failed: {e}")
+finally:
+    logging.info("Application terminated.")
 
