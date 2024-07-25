@@ -7,7 +7,7 @@ Any device over TCP/IP connections. Reads, parses, and publishes data.
 
 import socket
 import logging
-from waggle.plugin import Plugin
+from waggle.plugin import Plugin, get_timestamp
 from collections import OrderedDict
 import re
 import argparse
@@ -21,6 +21,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 TIMEOUT_SECONDS = 300
 
 
+
+
 def connect(args):
     """
     Connect to a device.
@@ -32,25 +34,21 @@ def connect(args):
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket.connect((args.ip, args.port))
 
-        response = tcp_socket.recv(4096).decode("utf-8")
-        logging.info(response)
+        # Send username and password for authentication
         tcp_socket.sendall(f"{args.username}\r\n".encode())
-
-        response = tcp_socket.recv(4096).decode("utf-8")
-        logging.info(response)
         tcp_socket.sendall(f"{args.password}\r\n".encode())
 
+        # Handle the failed authentication 
         response = tcp_socket.recv(4096).decode("utf-8")
-        logging.info(response)
-
-        # Handle the failed authentication
-        if "authentication successful" not in response:
+        print(response)
+        if "authentication successful" not in response.lower():
             raise Exception("Authentication failed.")
-
+        
     except Exception as e:
         logging.error(f"Connection failed: {e}. Check device or network.")
         raise
     return tcp_socket
+
 
 
 
@@ -96,6 +94,9 @@ def publish_data(plugin, data, data_names, meta, additional_meta=None):
 
 
 
+
+
+
 @timeout_decorator.timeout(TIMEOUT_SECONDS, use_signals=True)
 def parse_data(args, tcp_socket, data_names):
     try:
@@ -107,7 +108,7 @@ def parse_data(args, tcp_socket, data_names):
 
     if not line or len(line) < len(data_names):
         logging.warning("Empty or incomplete data line received.")
-        raise ValueError("Empty or incomplete data line.")
+        pass #raise ValueError("Empty or incomplete data line.")
 
     keys = data_names.keys()
     values = [float(value) for value in line]
