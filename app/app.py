@@ -33,14 +33,14 @@ def connect(args):
     try:
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket.connect((args.ip, args.port))
-
-        # Send username and password for authentication
+        
+        response = tcp_socket.recv(4096).decode("utf-8")
         tcp_socket.sendall(f"{args.username}\r\n".encode())
+        response = tcp_socket.recv(4096).decode("utf-8")
         tcp_socket.sendall(f"{args.password}\r\n".encode())
 
         # Handle the failed authentication 
         response = tcp_socket.recv(4096).decode("utf-8")
-        print(response)
         if "authentication successful" not in response.lower():
             raise Exception("Authentication failed.")
         
