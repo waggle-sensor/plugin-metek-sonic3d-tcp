@@ -21,8 +21,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 TIMEOUT_SECONDS = 300
 
 
-
-
 def connect(args):
     """
     Connect to a device.
@@ -107,6 +105,7 @@ def parse_data(args, tcp_socket, data_names):
 
 
     if not line or len(line) < len(data_names):
+        logging.info(line)
         logging.warning("Empty or incomplete data line received.")
         pass #raise ValueError("Empty or incomplete data line.")
 
@@ -156,37 +155,25 @@ if __name__ == "__main__":
 
 # data_names and meta
 data_names = OrderedDict([
-    ("x", "sensor.x"),
-    ("y", "sensor.y"),
-    ("z", "sensor.z"),
-    ("T", "sensor.temperature"),
-    ("vel", "sensor.velocity"),
-    ("dir", "sensor.direction"),
-    ("vels", "sensor.velocity_std"),
-    #("dirs", "sensor.direction_std"),
+    ("U", "sonic3d.uwind"),
+    ("V", "sonic3d.vwind"),
+    ("W", "sonic3d.wwind"),
+    ("T", "sonic3d.temp"),
 ])
 
 meta = {
     "sensor": args.sensor,
-    "units": {
-        "sensor.x": "units",
-        "sensor.y": "units",
-        "sensor.z": "units",
-        "sensor.temperature": "°C",
-        "sensor.velocity": "m/s",
-        "sensor.direction": "degrees",
-        #"sensor.velocity_std": "m/s",
-        #"sensor.direction_std": "degrees",
-    },
-    "description": {
-        "sensor.x": "X-component",
-        "sensor.y": "Y-component",
-        "sensor.z": "Z-component",
-        "sensor.temperature": "Temperature",
-        "sensor.velocity": "Velocity",
-        "sensor.direction": "Direction",
-        #"sensor.velocity_std": "Standard deviation of velocity",
-        #"sensor.direction_std": "Standard deviation of direction",
+     "units": {
+            "sonic3d.uwind": "m/s",
+            "sonic3d.vwind": "m/s",
+            "sonic3d.wwind": "m/s",
+            "sonic3d.temp": "degrees Celsius",
+        },
+        "description": {
+            "sonic3d.uwind": "zonal wind",
+            "sonic3d.vwind": "meridional wind",
+            "sonic3d.wwind": "vertical wind",
+            "sonic3d.temp": "Ambient Temperature",
     },
 }
 
